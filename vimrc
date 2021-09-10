@@ -1,0 +1,15 @@
+set nocompatible                                                                                        
+set backspace=indent,eol,start 
+set tabstop=4
+set softtabstop=4
+set expandtab
+set number
+set showcmd
+set cursorline
+set wildmenu
+set lazyredraw
+set showmatch
+set incsearch
+set hlsearch
+set foldenable
+set foldmethod=indent
