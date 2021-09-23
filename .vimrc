@@ -13,3 +13,4 @@ set incsearch
 set hlsearch
 set foldenable
 set foldmethod=indent
+syntax enable
