@@ -12,6 +12,8 @@ from libqtile.lazy import lazy
 # starting defaults
 mod = "mod4"
 terminal = "kitty"
+home_dir = "/home/xink/"
+
 
 keys = [
       # Define the Basic Shortcuts
@@ -26,7 +28,7 @@ keys = [
       Key([mod, "shift"], "f", lazy.window.toggle_floating(), desc="Spawn a command using a prompt widget"),
 
       # Basic Rofi Command Shortcuts
-      Key([mod], "d", lazy.spawn("rofi -show drun -icons run"), desc="Launch Rofi in Window mode"),
+      Key([mod], "p", lazy.spawn("rofi -show drun -show-icons"), desc="Launch Rofi in Window mode"),
 
       # "Extended" Command Shortcuts
       Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
@@ -43,7 +45,7 @@ keys = [
       ]),
 
       # Toggle Scratchpad visibility
-      Key([mod], "s", lazy.group['scratchpad'].dropdown_toggle('term'), desc="Toggle Terminal Scratchpad"),
+      Key([mod], "s", lazy.group['scratchpad'].dropdown_toggle('terminal'), desc="Toggle Terminal Scratchpad"),
 
       # Application / Utility / External Hot Keys
       Key([mod], "b", lazy.hide_show_bar()),
@@ -58,7 +60,7 @@ keys = [
       Key([mod], "Right", lazy.layout.right(), desc="Move focus to right"),
       Key([mod], "Down", lazy.layout.down(), desc="Move focus down"),
       Key([mod], "Up", lazy.layout.up(), desc="Move focus up"),
-      Key([mod], "space", lazy.layout.next(), desc="Move window focus to other window"),
+#      Key([mod], "space", lazy.layout.next(), desc="cycle focus"),
 
       # Window Movement
       Key([mod, "shift"], "h", lazy.layout.shuffle_left(), desc="Move window to the left"),
@@ -84,7 +86,7 @@ keys = [
       Key([mod, "control"], "n", lazy.layout.normalize(), desc="Reset all window sizes"),
       Key([mod, "control"], "b", lazy.layout.minimize(), desc="Reset all window sizes"),
       Key([mod, "control"], "m", lazy.layout.maximize(), desc="Maximize window"),
-      Key([mod, "shift"], "Return", lazy.layout.toggle_split(), desc="Toggle between split and unsplit sides of stack"),
+      #Key([mod, "shift"], "Return", lazy.layout.toggle_split(), desc="Toggle between split and unsplit sides of stack"),
       Key([mod, "shift", "control"], "h", lazy.layout.swap_column_left()),
       Key([mod, "shift", "control"], "l", lazy.layout.swap_column_right()),
 
@@ -98,6 +100,14 @@ keys = [
       Key([mod, "mod1", "shift"], "j", lazy.layout.section_down()),
       Key([mod, "mod1", "shift"], "k", lazy.layout.section_up()),
 
+
+      # Move groups
+#      Key([mod, ], "Right", lazy.screen.next_group()),
+#      Key([mod, ], "Left", lazy.screen.prev_group()),
+      Key([mod], "space", lazy.layout.screen.next_group(), desc="Cycle to next group"),
+      Key([mod, "shift"], "space", lazy.layout.screen.prev_group(), desc="Cycle to previous group"),
+      
+
       # Multimedia Keybindings
       Key([], "XF86AudioMute", lazy.spawn("pactl set-sink-mute 0 toggle")),
       Key([], "XF86AudioLowerVolume", lazy.spawn("amixer -q set Master 5%-")),
@@ -109,315 +119,341 @@ keys = [
 
   ]
 
-mouse = [
-    Drag([mod], "Button1", lazy.window.set_position_floating(),
-        start=lazy.window.get_position()),
-    Drag([mod], "Button3", lazy.window.set_size_floating(),
-        start=lazy.window.get_size()),
-    Click([mod], "Button2", lazy.window.bring_to_front())
-]
+# custom workspace names and initialization
+class Groupings:
 
-group_labels = [
-    "  ",
-    "  ",
-    "  ",
-    "  ",
-    "  "
-]
-group_names = ["1", "2", "3", "4", "5"]
+    def init_group_names(self):
+        return [("", {"layout": "monadtall"}),     # Terminals
+                ("", {"layout": "monadtall"}),     # Web Browser
+                ("", {"layout": "monadtall"}),     # File Manager
+#                ("", {"layout": "monadtall"}),     # Text Editor
+#                ("", {"layout": "monadtall"}),     # Media
+                ("", {"layout": "monadtall"}),     # Music/Audio
+#                ("漣", {"layout": "monadtall"})
+]   
 
-group_layouts = [
-    "monadtall",
-    "monadtall",
-    "monadtall",
-    "monadtall",
-    "floating"
-]
+ # Settings
 
-group_matches = [
-    None,
-    #[Match(wm_class=["kitty"])],
-    None,
-    [Match(wm_class=["firefox"])],
-    [Match(wm_class=["thunar"])],
-    [Match(wm_class=["Spotify"])],
-]
+    def init_groups(self):
+        return [Group(name, **kwargs) for name, kwargs in group_names]
 
-group_exclusives = [
-    False, False, False,
-    False, False
-]
+if __name__ in ["config", "__main__"]:
+    group_names = Groupings().init_group_names()
+    groups = Groupings().init_groups()
 
-group_persists = [
-    True, True, True,
-    True, True
-]
+for i, (name, kwargs) in enumerate(group_names, 1):
+    keys.append(Key([mod], str(i), lazy.group[name].toscreen()))        # Switch to another group
+    keys.append(Key([mod, "shift"], str(i), lazy.window.togroup(name))) # Send current window to another group
 
-group_inits = [
-    True, True, True,
-    True, True
-]
+##### DEFAULT THEME SETTINGS FOR LAYOUTS #####
+layout_theme = {"border_width": 3,
+                "margin": 5,
+                "font": "Source Code Pro Medium",
+                "font_size": 10,
+                "border_focus": "#bd93f9",
+                "border_normal": "#555555"
+                }
 
-groups = []
-
-for i in range(len(group_names)):
-    groups.append(
-        Group(
-            name=group_names[i],
-            matches=group_matches[i],
-            layout=group_layouts[i].lower(),
-            label=group_labels[i],
-            exclusive=group_exclusives[i],
-            init=group_inits[i],
-            persist=group_persists[i]
-        ))
-
-for i in groups:     
-    keys.append(Key([mod], i.name, lazy.group[i.name].toscreen()))        # Switch to another group
-    keys.append(Key([mod, "shift"], i.name, lazy.window.togroup(i.name))) # Send window to another group
-
-groups.append( ScratchPad("scratchpad", [
-    DropDown("term", "kitty", opacity=0.8)
-    ]))
-
-layout_theme = {
-        "border_width": 2,
-        "margin": 10,
-        "border_focus": "a94df9",
-        "border_normal": "888888"
-        }
-
-floating_theme = {
-        "border_width": 2,
-        "border_focus": "c44332",
-        "border_normal": "888888"
-        }
-
-treetab_theme = {
-        "bg_color": "131313",
-        "inactive_bg": "212121",
-        "inactive_fg": "bdbdbd",
-        "active_bg": "333333",
-        "active_fg": "a94df9",
-        "font": "System San Francisco Display 13",
-        "fontsize": 12,
-        "sections": ['Workspace'],
-        "section_fontsize": 14,
-        "panel_width": 210
-}
-
+# window layouts
 layouts = [
     layout.MonadTall(**layout_theme),
-    layout.Columns(**layout_theme,border_focus_stack='#d75f5f'),
-    layout.TreeTab(**treetab_theme),
-    layout.Floating(**floating_theme)
+    # layout.Max(**layout_theme),
+    layout.Floating(**layout_theme),
+    # layout.Stack(num_stacks=2, **layout_theme),
+    # layout.Bsp(**layout_theme),
+    # layout.Tile(**layout_theme),
+
+    # Try more layouts by unleashing below layouts.
+    layout.Columns(**layout_theme),
+    # layout.Matrix(**layout_theme),
+    # layout.MonadWide(**layout_theme),
+    # layout.RatioTile(**layout_theme),
+    # layout.TreeTab(**layout_theme),
+    # layout.VerticalTile(**layout_theme),
+    # layout.Zoomy(**layout_theme),
 ]
 
-# colors for panel theming
-colors = [["#131313", "#131313"], # panel background
-    ["#333333", "#333333"], # background for current selected group
-    ["#a94df9", "#a94df9"], # font color for selected group active 
-    ["#9f9f9f", "#a94df9"], # border line color for current tab
-    ["#333333", "#333333"], # border line color for 'other tabs' and color for 'odd widgets'
-    ["#555555", "#555555"], # color for the 'even widgets'
-    ["#a94df9", "#a94df9"], # window name and line color
-    ["#bdbdbd", "#bdbdbd"]] # font color for non-selected groups
 
-# Default Widget settings
+# colors for the bar/widgets/panel
+def init_colors():
+    return [["#282a36", "#282a36"], # color 0 | bg
+            ["#282a36", "#282a36"], # color 1 | bg
+            ["#f8f8f2", "#f8f8f2"], # color 2 | fg
+            ["#ff5555", "#ff5555"], # color 3 | red
+            ["#50fa7b", "#50fa7b"], # color 4 | green
+            ["#f1fa8c", "#f1fa8c"], # color 5 | yellow
+            ["#bd93f9", "#bd93f9"], # color 6 | blue
+            ["#ff79c6", "#ff79c6"], # color 7 | magenta
+            ["#8be9fd", "#8be9fd"], # color 8 | cyan
+            ["#bbbbbb", "#bbbbbb"]] # color 9 | white
+
+def init_separator():
+    return widget.Sep(
+                size_percent = 60,
+                margin = 1,
+                linewidth = 2,
+                background = colors[1],
+                foreground = "#555555")
+
+def nerd_icon(nerdfont_icon, fg_color):
+    return widget.TextBox(
+                font = "Iosevka Nerd Font",
+                fontsize = 15,
+                text = nerdfont_icon,
+                foreground = fg_color,
+                background = colors[1])
+
+def init_edge_spacer():
+    return widget.Spacer(
+                length = 5,
+                background = colors[1])
+
+
+colors = init_colors()
+sep = init_separator()
+space = init_edge_spacer()
+
 widget_defaults = dict(
-    font='System San Francisco Display 13',
-    fontsize=16,
-    padding=3,
-    backround=colors[2]
+    font='Source Code Pro Medium',
+    fontsize=12,
+    padding=5,
 )
 extension_defaults = widget_defaults.copy()
 
-# Widget Definitions and Settings
+
 def init_widgets_list():
     widgets_list = [
-        widget.Sep(
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[2],
-            background = colors[0]
-            ),
-        widget.GroupBox (
-            font = "System San Francisco Display 13",
-            fontsize = 16,
-            margin_y = 3,
-            margin_x = 0,
-            padding_y = 5,
-            padding_x = 3,
-            borderwidth = 2,
-            active = colors[2],
-            inactive = colors [7],
-            rounded = False,
-            highlight_color = colors [1],
-            highlight_method = "line",
-            this_current_screen_border = colors[6],
-            this_screen_border = colors [4],
-            foreground = colors[2],
-            background = colors[0]
-            ),
-        widget.Sep(
-            linewidth = 0,
-            padding = 5,
-            foreground = colors[2],
-            background = colors[0]
-            ),
-        widget.Prompt(
-            foreground = colors[6],
-            background = colors[0],
-            # prompt = "Run Command: "
-            ),
-        widget.WindowName(
-            foreground = colors[6],
-            background = colors[0],
-            padding = 0
-            ),
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[0],
-            background = colors[0]
-            ),
-        widget.Mpris2(
-                    name='spotify',
-                    foreground = colors[2],
-                    background = colors[4],
-                    objname="org.mpris.MediaPlayer2.spotify",
-                    display_metadata=['xesam:title', 'xesam:artist'],
-                    scroll_chars=None,
-                    stop_pause_text='',
-                    **widget_defaults
-                ),
-        #widget.TextBox (
-         #   text= '',
-          #  foreground = colors[0],
-           # background = colors[4],
-            #padding = 0,
-           # fontsize = 26
+            ######################
+            # Left Side of the bar
+            ######################
+            space,
+            #widget.Image(
+            #    filename = "/usr/share/pixmaps/archlinux-logo.png",
+            #    background = colors[1],
+            #    margin = 3
             #),
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            widget.Image(
+                filename = "~/.config/qtile/python.png",
+                background = colors[1],
+                margin = 3,
+                mouse_callbacks = {
+                    'Button3': lambda : qtile.cmd_spawn(
+                        f'{terminal} -e vim {home_dir}/.config/qtile/config.py'
+                    )
+                }
             ),
-        widget.TextBox(
-            text = '',
-            foreground = colors[2],
-            background = colors[0]
+            widget.GroupBox(
+                font = "Iosevka Nerd Font",
+                fontsize = 15,
+                foreground = colors[2],
+                background = colors[1],
+                borderwidth = 4,
+                highlight_method = "text",
+                this_current_screen_border = colors[6],
+                active = colors[4],
+                inactive = colors[2]
             ),
-        widget.Volume (
-            background = colors[0],
-            foreground = colors[2],
-            mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn('pavucontrol')}
-            ), 
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            sep, 
+            nerd_icon(
+                "",
+                colors[7]
             ),
-        widget.TextBox (
-            text = "  ",
-            foreground = colors[2],
-            background = colors[0],
-            padding = 0,
-            fontsize = 14
+            widget.CurrentLayout(
+                foreground = colors[2],
+                background = colors[1]
             ),
-        widget.Memory(
-            foreground = colors[2],
-            background = colors[0],
-            #format = '{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}'
-            mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn('kitty htop')},
-            padding = 5
+            sep,
+            nerd_icon(
+                "墳",
+                colors[3]
             ),
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            widget.Volume(
+                foreground = colors[2],
+                background = colors[1]
             ),
-        widget.CPUGraph(
-            foreground = colors[2],
-            background = colors[0],
+            widget.Mpris2(    
+               name='spotify',    
+               foreground = colors[2],    
+                background = colors[1],    
+               objname="org.mpris.MediaPlayer2.spotify",    
+               display_metadata=['xesam:title', 'xesam:artist'],    
+               scroll_chars=None,    
+               stop_pause_text='',    
+               **widget_defaults    
+               ),
+            widget.Spacer(
+                length = bar.STRETCH,
+                background = colors[1]
             ),
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            ############
+            # Center bar
+            ############
+            nerd_icon(
+                "﬙",
+                colors[3]
             ),
-        widget.ThermalSensor(
-            foreground = colors[2],
-            background = colors[0],
+            widget.CPU(
+                format = "{load_percent}%",
+                foreground = colors[2],
+                background = colors[1],
+                update_interval = 2,
+                mouse_callbacks = {
+                    'Button1': lambda : qtile.cmd_spawn(f"{terminal} -e htop")
+                }
             ),
-        #widget.NetGraph ( # requires python-psutil package
-        #    interface = "wlp3s0",
-        #    foreground = colors[4],
-        #    #format = '{down} ﬕ {up} ',
-        #    format = '{down}d,  {up}u ',
-        #    background = colors[0],
-        #    padding = 1,
-        #    mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn('nm-connection-editor')}
-        #    ),
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            nerd_icon(
+                "",
+                colors[4]
             ),
-        widget.Clock (                                                   
-            foreground = colors[2],
-            background = colors[0],
-            format = "%Y-%m-%d %H:%M"
-            ),  
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            widget.Memory(
+                format = "{MemUsed:.0f}{mm}",
+                foreground = colors[2],
+                background = colors[1],
+                update_interval = 2,
+                mouse_callbacks = {
+                    'Button1': lambda : qtile.cmd_spawn(f"{terminal} -e htop")
+                }
             ),
-        widget.Systray(
-                background = colors[0],
-                padding = 0
+            #######################
+            # Right Side of the bar
+            #######################
+
+            widget.Spacer(
+                length = bar.STRETCH,
+                background = colors[1]
             ),
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            nerd_icon(
+                "",
+                colors[4]
             ),
-        widget.BatteryIcon(
-            foreground = colors[0],
-            background = colors[0],
+            widget.Net(
+                format = "{down} ↓↑ {up}",
+                foreground = colors[2],
+                background = colors[1],
+                update_interval = 2,
+                mouse_callbacks = {
+                    'Button1': lambda : qtile.cmd_spawn("def-nmdmenu")
+                }
             ),
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            sep,
+            nerd_icon(
+                "",
+                colors[7]
             ),
-        widget.CurrentLayoutIcon (
-            custom_icon_paths = [os.path.expanduser("~/.config/qtile/icons")],
-            foreground = colors[4],
-            background = colors[0],
-            padding = 5
+            widget.Clock(
+                format = '%b %d-%Y',
+                foreground = colors[2],
+                background = colors[1]
             ),
-        widget.Sep (
-            linewidth = 0,
-            padding = 6,
-            foreground = colors[4],
-            background = colors[0],
+            nerd_icon(
+                "",
+                colors[8]
             ),
+            widget.Clock(
+                format = '%I:%M %p',
+                foreground = colors[2],
+                background = colors[1]
+            ),
+            sep,
+            nerd_icon(
+                "  ",
+                colors[6]
+            ),
+            widget.Battery(
+                foreground = colors[2],
+                background = colors[1],
+                format = "{percent:2.0%}"
+            ),
+            widget.Systray(
+                background = colors[1]
+            ),
+            space
         ]
     return widgets_list
 
-# Initialize Screens and Widgets
-screens = [
-    Screen(
-        top=bar.Bar(widgets=init_widgets_list(), opacity=1.0, size=20)
-    )
+
+# screens/bar
+def init_screens():
+    return [Screen(top=bar.Bar(widgets=init_widgets_list(), size=35, opacity=0.9, margin=[5,10,0,10]))]
+
+screens = init_screens()
+
+# Drag floating layouts.
+mouse = [
+    Drag([mod], "Button1", lazy.window.set_position_floating(),
+         start=lazy.window.get_position()),
+    Drag([mod], "Button3", lazy.window.set_size_floating(),
+         start=lazy.window.get_size()),
+    Click([mod], "Button2", lazy.window.bring_to_front())
 ]
+
+#
+# assign apps to groups/workspace
+#
+@hook.subscribe.client_new
+def assign_app_group(client):
+    d = {}
+
+    # assign deez apps
+#    d[group_names[0][0]] = ['kitty']
+    d[group_names[1][0]] = ['firefox']
+    d[group_names[2][0]] = ['thunar' 'nautilus']
+    d[group_names[3][0]] = ['code', 'geany']
+    d[group_names[4][0]] = ['vlc', 'obs', 'mpv', 'mplayer', 'lxmusic', 'gimp']
+    d[group_names[5][0]] = ['spotify']
+    d[group_names[6][0]] = ['lxappearance', 'gpartedbin', 'lxtask', 'lxrandr', 'arandr', 'pavucontrol', 'xfce4-settings-manager']
+
+    wm_class = client.window.get_wm_class()[0]
+    for i in range(len(d)):
+        if wm_class in list(d.values())[i]:
+            group = list(d.keys())[i]
+            client.togroup(group)
+            client.group.cmd_toscreen(toggle=False)
+
+
+main = None
+@hook.subscribe.startup
+def start_once():
+    start_script = os.path.expanduser("~/scripts/autostart.sh")
+    subprocess.call([start_script])
+
+@hook.subscribe.startup_once
+def start_always():
+    # fixes the cursor
+    subprocess.Popen(['xsetroot', '-cursor_name', 'left_ptr'])
+
+
+dgroups_key_binder = None
+dgroups_app_rules = []  # type: List
+follow_mouse_focus = True
+bring_front_click = False
+cursor_warp = False
+floating_layout = layout.Floating(float_rules=[
+    # Run the utility of `xprop` to see the wm class and name of an X client.
+    *layout.Floating.default_float_rules,
+    Match(wm_class='confirmreset'),  # gitk
+    Match(wm_class='makebranch'),  # gitk
+    Match(wm_class='maketag'),  # gitk
+    Match(wm_class='ssh-askpass'),  # ssh-askpass
+    Match(wm_class='Viewnior'),  # Photos/Viewnior 
+    Match(wm_class='Alafloat'),  # Floating Alacritty Terminal 
+    Match(title='branchdialog'),  # gitk
+    Match(title='pinentry'),  # GPG key password entry
+], **layout_theme)
+auto_fullscreen = True
+focus_on_window_activation = "smart"
+reconfigure_screens = True
+
+# If things like steam games want to auto-minimize themselves when losing
+# focus, should we respect this or not?
+auto_minimize = True
+
+# XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
+# string besides java UI toolkits; you can see several discussions on the
+# mailing lists, GitHub issues, and other WM documentation that suggest setting
+# this string if your java app doesn't work correctly. We may as well just lie
+# and say that we're a working one by default.
+#
+# We choose LG3D to maximize irony: it is a 3D non-reparenting WM written in
+# java that happens to be on java's whitelist.
+wmname = "LG3D"
