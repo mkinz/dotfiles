@@ -16,8 +16,19 @@ alias grep='grep -i'
 alias rfind='find . -print |grep'
 alias ud='sudo pacman -Syyu'
 alias mx='alsamixer'
-alias cf='vim ~/.config/i3/config'
-alias cleanup='pacman -Rsn $(pacman -Qdtq)'
+alias cf='vim ~/.config/qtile/config.py'
+alias cleaner='sudo pacman -Rsn $(pacman -Qdtq)'
+alias mirror='sudo reflector --latest 5 --sort rate --country US --age 12 --protocol https --save /etc/pacman.d/mirrorlist'
+alias itb='cd /home/xink/.local/share/IntoTheBreach/profile_mooncheese'
+
 
 # network connections
 alias network='nmcli connection show'
+
+# configs
+aw='cd ~/.config/awesome/'
+awbk='cp ~/.config/awesome/rc.lui ~/.config/awesome/rc.lui.bk'
+
+#colorscheme
+(cat ~/.cache/wal/sequences &)
+
