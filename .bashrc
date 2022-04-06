@@ -20,7 +20,7 @@ alias cf='vim ~/.config/qtile/config.py'
 alias cleaner='sudo pacman -Rsn $(pacman -Qdtq)'
 alias mirror='sudo reflector --latest 5 --sort rate --country US --age 12 --protocol https --save /etc/pacman.d/mirrorlist'
 alias itb='cd /home/xink/.local/share/IntoTheBreach/profile_mooncheese'
-gl='git log --graph --oneline --decorate --all'
+alias gl='git log --graph --oneline --decorate --all'
 alias gll="git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)    <%an>%Creset%n' --abbrev-commit --date=relative --branches"
 
 
